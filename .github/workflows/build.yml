@@ -13,6 +13,10 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
+      # 打印根目录文件，排错用，看有没有web文件夹
+      - name: List root files
+        run: ls -la
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -20,6 +24,7 @@ jobs:
 
       - name: Build Vue Web Frontend
         run: |
+          ls -la
           cd web
           npm config set registry https://registry.npmmirror.com
           npm install

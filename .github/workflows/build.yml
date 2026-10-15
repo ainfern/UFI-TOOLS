@@ -60,14 +60,3 @@ jobs:
         with:
           name: ${{ steps.meta.outputs.NEW_APK_NAME }}
           path: ${{ steps.meta.outputs.NEW_APK_NAME }}
-
-      # 创建Release，把apk上传到Release Assets（截图看到的Assets）
-      - name: Create GitHub Release & upload to Assets
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.meta.outputs.BUILD_TAG }}
-          name: UFI‑TOOLS WEB Build ${{ steps.meta.outputs.BUILD_TAG }}
-          prerelease: true
-          files: ${{ steps.meta.outputs.NEW_APK_NAME }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

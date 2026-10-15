@@ -1,8 +1,9 @@
-name: Android Release CI
+name: Android Release&Upload CI
 on:
   push:
     branches: [ "http-server-version" ]
   workflow_dispatch:
+
 jobs:
   build-release:
     runs-on: ubuntu-latest
@@ -35,9 +36,38 @@ jobs:
       - name: Build Debug APK
         run: ./gradlew assembleDebug
 
-      # 新增：把编译好的APK上传为Artifacts，这一步就是生成下载压缩包的关键
-      - name: Upload built APK
+      # 提取versionName、生成时间戳，输出到环境变量
+      - name: Get version & build timestamp
+        id: meta
+        run: |
+          # 从build.gradle.kts读取versionName
+          VERSION_NAME=$(grep "versionName" app/build.gradle.kts | sed -E 's/.*"([0-9.]+)".*/\1/')
+          BUILD_DATE=$(date +%Y%m%d)
+          BUILD_TIME=$(date +%H%M)
+          NEW_APK_NAME="UFI-TOOLS_WEB_V${VERSION_NAME}_${BUILD_DATE}_${BUILD_TIME}.apk"
+          echo "VERSION_NAME=${VERSION_NAME}" >> $GITHUB_OUTPUT
+          echo "NEW_APK_NAME=${NEW_APK_NAME}" >> $GITHUB_OUTPUT
+          echo "BUILD_TAG=build-${BUILD_DATE}-${BUILD_TIME}" >> $GITHUB_OUTPUT
+
+      # 重命名编译输出apk
+      - name: Rename apk file
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk ${{ steps.meta.outputs.NEW_APK_NAME }}
+
+      # 上传CI Artifact（网页run页面下载）
+      - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: UFI-TOOLS-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: ${{ steps.meta.outputs.NEW_APK_NAME }}
+          path: ${{ steps.meta.outputs.NEW_APK_NAME }}
+
+      # 创建Release，把apk上传到Release Assets（截图看到的Assets）
+      - name: Create GitHub Release & upload to Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.BUILD_TAG }}
+          name: UFI‑TOOLS WEB Build ${{ steps.meta.outputs.BUILD_TAG }}
+          prerelease: true
+          files: ${{ steps.meta.outputs.NEW_APK_NAME }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

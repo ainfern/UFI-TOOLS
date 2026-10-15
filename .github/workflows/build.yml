@@ -1,9 +1,7 @@
-name: Build & Release UFI-TOOLS
+name: Build & Release UFI‑TOOLS
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches: [ http-server-version ]
   workflow_dispatch:
 
 jobs:
@@ -12,8 +10,9 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
+        with:
+          ref: http-server-version   # 重点！指定这个分支！！
 
-      # 打印根目录文件，排错用，看有没有web文件夹
       - name: List root files
         run: ls -la
 
@@ -24,7 +23,6 @@ jobs:
 
       - name: Build Vue Web Frontend
         run: |
-          ls -la
           cd web
           npm config set registry https://registry.npmmirror.com
           npm install
@@ -34,9 +32,8 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.23'
-          cache: true
 
-      - name: Build arm64 binary (中兴F50随身WiFi)
+      - name: Build arm64 binary (中兴F50)
         env:
           CGO_ENABLED: 0
           GOOS: linux
